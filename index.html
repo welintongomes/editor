@@ -1,752 +1,740 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Code Editor</title>
-
+    <title>Editor de Código Aprimorado</title>
     <!-- CodeMirror CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/matchesonscrollbar.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
     <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-hover: #45a049;
+            --background-color: #f5f5f5;
+            --border-color: #ddd;
+            --text-color: #333;
+            --toolbar-height: 60px;
+            --header-height: 50px;
+            --statusbar-height: 30px;
+        }
+
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #1e1e1e;
-            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
             height: 100vh;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
-        .container {
+        .header {
+            background-color: #333;
+            color: white;
+            padding: 8px 15px;
             display: flex;
-            flex-direction: column;
-            height: 100vh;
+            justify-content: space-between;
+            align-items: center;
+            min-height: var(--header-height);
+            flex-shrink: 0;
         }
 
-        /* Header/Toolbar */
+        .title {
+            margin: 0;
+            font-size: 1.1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
         .toolbar {
-            background: #2d2d30;
-            padding: 8px;
-            border-bottom: 1px solid #3e3e42;
+            background-color: #f8f8f8;
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 10px;
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             align-items: center;
-            min-height: 50px;
+            min-height: var(--toolbar-height);
+            flex-shrink: 0;
+            overflow-x: auto;
         }
 
         .toolbar-group {
             display: flex;
-            gap: 4px;
-            align-items: center;
+            gap: 5px;
+            align-items: row;
+            flex-shrink: 0;
         }
 
-        .toolbar button,
-        .toolbar select {
-            background: #404040;
-            color: #ffffff;
-            border: 1px solid #555;
-            padding: 6px 10px;
+        .separator {
+            height: 20px;
+            width: 1px;
+            background-color: var(--border-color);
+            margin: 0 3px;
+            flex-shrink: 0;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
-            transition: background 0.2s;
+            font-size: 13px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            min-height: 36px;
+            touch-action: manipulation;
         }
 
-        .toolbar button:hover {
-            background: #505050;
+        button:hover {
+            background-color: var(--primary-hover);
         }
 
-        .toolbar select {
-            min-width: 80px;
+        button.icon-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            width: 36px;
+            height: 36px;
+            padding: 4px;
+            min-width: 36px;
         }
 
-        /* Search bar */
+        button.icon-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
         .search-container {
             display: flex;
-            gap: 4px;
             align-items: center;
+            gap: 5px;
             flex-wrap: wrap;
         }
 
-        .search-container input {
-            background: #404040;
-            color: #ffffff;
-            border: 1px solid #555;
-            padding: 6px 8px;
+        input[type="text"], select {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            font-size: 12px;
-            min-width: 100px;
+            font-size: 14px;
+            min-height: 36px;
+            touch-action: manipulation;
         }
 
-        .search-count {
-            font-size: 11px;
-            color: #ccc;
-            min-width: 40px;
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
 
-        /* Editor container */
+        select {
+            padding: 7px 8px;
+            min-width: 120px;
+        }
+
         .editor-container {
-            flex: 1;
-            position: relative;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
 
-        .copy-button {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            background: rgba(64, 64, 64, 0.9);
-            color: #ffffff;
-            border: 1px solid #555;
-            padding: 6px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            z-index: 1000;
-            transition: all 0.2s;
-        }
-
-        .copy-button:hover {
-            background: rgba(80, 80, 80, 0.9);
-        }
-
-        .copy-button.copied {
-            background: rgba(34, 139, 34, 0.9);
-        }
-
-        /* CodeMirror customization */
+        /* CodeMirror customizações */
         .CodeMirror {
             height: 100%;
             font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 14px;
+            line-height: 1.4;
+            
         }
 
-        /* Status bar */
-        .status-bar {
-            background: #2d2d30;
-            padding: 6px 12px;
-            border-top: 1px solid #3e3e42;
+        .CodeMirror-matchingbracket {
+            color: #0f0 !important;
+            font-weight: bold;
+        }
+
+        .statusbar {
+            background-color: #f0f0f0;
+            border-top: 1px solid var(--border-color);
+            padding: 4px 10px;
+            font-size: 11px;
+            color: #666;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            color: #ccc;
-            flex-wrap: wrap;
-            gap: 10px;
+            min-height: var(--statusbar-height);
+            flex-shrink: 0;
+            overflow: hidden;
         }
 
-        .status-left,
-        .status-right {
+        .statusbar-left, .statusbar-right {
             display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
         }
 
-        /* Modals */
-        .modal {
+        .snippet-container {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 10px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .snippet-item {
+            padding: 5px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .snippet-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .snippet-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .snippet-preview {
+            font-size: 12px;
+            color: #666;
+            white-space: pre-wrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 40px;
+        }
+
+        .settings-modal {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 2000;
-            align-items: center;
+            background-color: rgba(0,0,0,0.5);
             justify-content: center;
-            padding: 20px;
+            align-items: center;
+            z-index: 1000;
+            padding: 10px;
         }
 
         .modal-content {
-            background: #2d2d30;
+            background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            width: 100%;
-            max-width: 500px;
-            max-height: 80vh;
+            border-radius: 6px;
+            width: 500px;
+            max-width: 100%;
+            max-height: 90vh;
             overflow-y: auto;
-            position: relative;
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #444;
-        }
-
-        .modal-header h3 {
-            color: #ffffff;
-            margin: 0;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #ccc;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-        }
-
-        .form-group {
             margin-bottom: 15px;
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #ccc;
-            font-size: 13px;
+        .modal-title {
+            font-size: 1.2rem;
+            margin: 0;
         }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            background: #404040;
-            color: #ffffff;
-            border: 1px solid #555;
-            padding: 8px;
-            border-radius: 4px;
-            font-size: 13px;
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            min-height: auto;
         }
 
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        .settings-group {
+            margin-bottom: 15px;
         }
 
-        .form-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
+        .settings-group h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1rem;
         }
 
-        .checkbox-group {
+        .settings-row {
             display: flex;
+            margin-bottom: 8px;
             align-items: center;
-        }
-
-        .modal-buttons {
-            display: flex;
             gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #444;
         }
 
-        .btn-primary {
-            background: #0078d4;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
+        .settings-label {
+            flex: 1;
+            min-width: 0;
         }
 
-        .btn-secondary {
-            background: #555;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
+        .search-results {
+            margin-left: 5px;
+            font-size: 12px;
+            white-space: nowrap;
         }
 
-        /* Snippets panel */
-        .snippet-container {
-            display: none;
-            position: absolute;
-            background: #2d2d30;
-            border: 1px solid #555;
-            border-radius: 4px;
-            max-width: 300px;
-            max-height: 400px;
-            overflow-y: auto;
-            z-index: 1500;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        }
-
-        .snippet-item {
-            padding: 10px;
-            border-bottom: 1px solid #444;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .snippet-item:hover {
-            background: #404040;
-        }
-
-        .snippet-item:last-child {
-            border-bottom: none;
-        }
-
-        .snippet-name {
-            font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 4px;
-            font-size: 13px;
-        }
-
-        .snippet-preview {
-            color: #ccc;
-            font-size: 11px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            word-break: break-all;
-        }
-
-        .snippet-actions {
+        .nav-buttons {
             display: flex;
-            gap: 5px;
-            margin-top: 5px;
+            gap: 2px;
         }
 
-        .snippet-actions button {
-            background: #555;
-            color: white;
-            border: none;
-            padding: 2px 6px;
-            border-radius: 2px;
-            cursor: pointer;
-            font-size: 10px;
-        }
-
-        /* Mobile responsiveness */
+        /* Responsivo para tablets */
         @media (max-width: 768px) {
+            .title {
+                font-size: 1rem;
+            }
+            
             .toolbar {
-                padding: 6px;
-                gap: 4px;
+                padding: 6px 8px;
+                gap: 6px;
             }
-
-            .toolbar button,
-            .toolbar select {
-                padding: 8px 6px;
-                font-size: 11px;
-            }
-
-            .search-container input {
-                min-width: 80px;
-                flex: 1;
-            }
-
+            
             .toolbar-group {
-                gap: 2px;
+                flex-wrap: wrap;
             }
-
-            .copy-button {
-                top: 5px;
-                right: 10px;
-                padding: 8px;
-                font-size: 11px;
+            
+            select {
+                min-width: 100px;
+                font-size: 13px;
             }
-
-            .status-bar {
-                padding: 4px 8px;
-                font-size: 10px;
-                gap: 5px;
+            
+            button {
+                font-size: 12px;
+                padding: 6px 10px;
             }
-
-            .status-left,
-            .status-right {
-                gap: 8px;
-            }
-
+            
             .CodeMirror {
                 font-size: 13px;
             }
+            
+            .statusbar {
+                font-size: 10px;
+                gap: 8px;
+            }
+            
+            .statusbar-left, .statusbar-right {
+                gap: 8px;
+            }
+        }
 
+        /* Responsivo para smartphones */
+        @media (max-width: 480px) {
+            :root {
+                --toolbar-height: auto;
+                --header-height: 45px;
+                --statusbar-height: 25px;
+            }
+            
+            .header {
+                padding: 6px 10px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .title {
+                font-size: 0.9rem;
+                flex: 1;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 8px;
+                gap: 8px;
+            }
+            
+            .toolbar-group {
+                justify-content: space-between;
+                width: 100%;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            
+            .toolbar-group:first-child {
+                order: 1;
+            }
+            
+            .search-container {
+                order: 3;
+                flex-direction: row;
+                gap: 8px;
+            }
+            
+            .toolbar-group:last-child {
+                order: 3;
+                justify-content: center;
+            }
+            
+            .separator {
+                display: none;
+            }
+            
+            select {
+                flex: 1;
+                min-width: 0;
+                font-size: 14px;
+            }
+            
+            input[type="text"] {
+                flex: 2;
+                min-width: 0;
+                font-size: 14px;
+            }
+            
+            button {
+                flex: 1;
+                font-size: 12px;
+                padding: 8px 6px;
+                min-height: 40px;
+            }
+            
+            button.icon-btn {
+                flex: 0 0 40px;
+                width: 40px;
+                height: 40px;
+            }
+            
+            .search-results {
+                order: 1;
+                text-align: center;
+                margin: 0;
+            }
+            
+            .nav-buttons {
+                order: 2;
+                flex: 1;
+                justify-content: space-around;
+            }
+            
+            .search-container > button:not(.icon-btn) {
+                order: 3;
+            }
+            
+            .CodeMirror {
+                font-size: 12px;
+                line-height: 1.3;
+            }
+            
+            .statusbar {
+                flex-direction: column;
+                gap: 2px;
+                padding: 3px 8px;
+                font-size: 9px;
+            }
+            
+            .statusbar-left, .statusbar-right {
+                justify-content: space-between;
+                gap: 5px;
+                flex-wrap: wrap;
+            }
+            
             .modal-content {
                 padding: 15px;
                 margin: 10px;
             }
-
-            .snippet-container {
-                max-width: 250px;
-                left: 10px !important;
-                right: 10px;
-                width: auto;
+            
+            .settings-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+            }
+            
+            .settings-label {
+                text-align: left;
+            }
+            
+            /* Otimizações para touch */
+            .CodeMirror-cursor {
+                border-left: 2px solid #000;
+            }
+            
+            .CodeMirror-selected {
+                background: rgba(74, 175, 79, 0.2);
             }
         }
 
-        @media (max-width: 480px) {
+        /* Muito pequeno (smartphones em portrait) */
+        @media (max-width: 360px) {
+            .header {
+                padding: 4px 8px;
+            }
+            
+            .title {
+                font-size: 0.8rem;
+            }
+            
+            .toolbar {
+                padding: 6px;
+            }
+            
+            .CodeMirror {
+                font-size: 11px;
+            }
+            
+            button {
+                font-size: 11px;
+                padding: 6px 4px;
+            }
+            
+            .statusbar {
+                font-size: 8px;
+            }
+        }
+
+        /* Landscape em smartphones */
+        @media (max-width: 768px) and (orientation: landscape) {
             .toolbar {
                 flex-direction: row;
-                align-items: self-start;
+                flex-wrap: wrap;
+                justify-content: space-between;
             }
-
+            
             .toolbar-group {
-                justify-content: center;
+                width: auto;
+                flex: 0 1 auto;
             }
-
+            
             .search-container {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .search-container input {
-                max-width: 120px;
-            }
-
-            .status-bar {
-                flex-direction: column;
-                align-items: center;
-                gap: 2px;
-            }
-
-            .CodeMirror {
-                font-size: 12px;
+                flex-direction: row;
+                flex-wrap: wrap;
             }
         }
 
-        /* Hide elements on very small screens */
-        @media (max-width: 360px) {
-            .search-count {
-                display: none;
+        /* Melhorias para acessibilidade touch */
+        @media (pointer: coarse) {
+            button, input, select {
+                min-height: 32px;
             }
-
-            .status-right {
-                display: none;
+            
+            .icon-btn {
+                min-width: 44px;
+                min-height: 44px;
             }
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <!-- Toolbar -->
-        <div class="toolbar">
-            <div class="toolbar-group">
-                <button id="save-btn" title="Salvar (Ctrl+S)">💾</button>
-                <button id="undo-btn" title="Desfazer">↶</button>
-                <button id="redo-btn" title="Refazer">↷</button>
-                <button id="format-btn" title="Formatar código">⚡</button>
-            </div>
-
-            <div class="toolbar-group">
-                <select id="language-select" title="Linguagem">
-                    <option value="javascript">JavaScript</option>
-                    <option value="htmlmixed">HTML</option>
-                    <option value="css">CSS</option>
-                    <option value="php">PHP</option>
-                    <option value="python">Python</option>
-                    <option value="xml">XML</option>
-                    <option value="sql">SQL</option>
-                </select>
-                <select id="theme-select" title="Tema">
-                    <option value="default">Padrão</option>
-                    <option value="material">Material</option>
-                    <option value="monokai">Monokai</option>
-                    <option value="dracula">Dracula</option>
-                </select>
-            </div>
-
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="Buscar..." title="Buscar (Ctrl+F)">
-                <input type="text" id="replace-input" placeholder="Substituir..." style="display:none;">
-                <button id="prev-btn" title="Anterior (Shift+F3)">↑</button>
-                <button id="next-btn" title="Próximo (F3)">↓</button>
-                <span id="search-count" class="search-count">0/0</span>
-                <button id="search-btn" title="Buscar">🔍</button>
-                <button id="replace-btn" title="Substituir" style="display:none;">↔</button>
-                <button id="replace-all-btn" title="Substituir tudo" style="display:none;">⇄</button>
-            </div>
-
-            <div class="toolbar-group">
-                <button id="snippets-btn" title="Snippets">📝</button>
-                <button id="add-snippet-btn" title="Adicionar Snippet">➕</button>
-                <button id="settings-btn" title="Configurações">⚙</button>
-            </div>
-        </div>
-
-        <!-- Editor -->
-        <div class="editor-container">
-            <button id="copy-btn" class="copy-button" title="Copiar todo o código">📋</button>
-            <textarea id="code-editor"></textarea>
-        </div>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="status-left">
-                <span id="line-count">1 linha</span>
-                <span id="char-count">0 caracteres</span>
-                <span id="cursor-position">Ln: 1, Col: 1</span>
-            </div>
-            <div class="status-right">
-                <span id="selection-info"></span>
-                <span id="indentation">Espaços: 4</span>
-            </div>
+    <div class="header">
+        <h1 class="title">Editor de Código</h1>
+        <div>
+            <button id="save-btn">Salvar</button>
         </div>
     </div>
 
-    <!-- Snippets Panel -->
-    <div id="snippet-container" class="snippet-container"></div>
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <select id="language-select">
+                <option value="javascript">JavaScript</option>
+                <option value="htmlmixed">HTML</option>
+                <option value="css">CSS</option>
+                <option value="php">PHP</option>
+                <option value="python">Python</option>
+                <option value="clike">C/C++/Java</option>
+                <option value="xml">XML</option>
+                <option value="sql">SQL</option>
+            </select>
+            
+            <select id="theme-select">
+                <option value="default">Tema Claro</option>
+                <option value="monokai">Monokai</option>
+                <option value="dracula">Dracula</option>
+                <option value="material">Material</option>
+                <option value="nord">Nord</option>
+                <option value="solarized">Solarized</option>
+            </select>
+        </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="modal">
+        <div class="separator"></div>
+
+        <div class="toolbar-group">
+            <button class="icon-btn" id="undo-btn" title="Desfazer (Ctrl+Z)">↩️</button>
+            <button class="icon-btn" id="redo-btn" title="Refazer (Ctrl+Y)">↪️</button>
+            <button class="icon-btn" id="format-btn" title="Formatar código">🔄</button>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="toolbar-group search-container">
+            <input type="text" id="search-input" placeholder="Buscar..." />
+            <input type="text" id="replace-input" placeholder="Substituir..." />
+            <button id="search-btn" title="Buscar (Ctrl+F)">🔍</button>
+            <div class="search-results">
+                <span id="search-count">0/0</span>
+            </div>
+            <div class="nav-buttons">
+                <button class="icon-btn" id="prev-btn" title="Anterior (Shift+F3)">▲</button>
+                <button class="icon-btn" id="next-btn" title="Próximo (F3)">▼</button>
+            </div>
+            <button id="replace-btn">Substituir</button>
+            <button id="replace-all-btn">Subst. todos</button>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="toolbar-group">
+            <button id="snippets-btn">Snippets</button>
+            <button id="settings-btn">⚙️</button>
+        </div>
+    </div>
+
+    <div class="editor-container">
+        <textarea id="code-editor"></textarea>
+    </div>
+
+    <div class="statusbar">
+        <div class="statusbar-left">
+            <span id="cursor-position">Ln: 1, Col: 1</span>
+            <span id="selection-info"></span>
+        </div>
+        <div class="statusbar-right">
+            <span id="char-count">0 caracteres</span>
+            <span id="line-count">0 linhas</span>
+            <span id="indentation">Espaços: 4</span>
+        </div>
+    </div>
+
+    <div id="snippet-container" class="snippet-container">
+        <!-- Snippets serão inseridos aqui -->
+    </div>
+
+    <div id="settings-modal" class="settings-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Configurações</h3>
-                <button id="close-settings" class="close-btn">&times;</button>
+                <h2 class="modal-title">Configurações do Editor</h2>
+                <button class="modal-close" id="close-settings">&times;</button>
             </div>
-
-            <div class="form-group">
-                <label for="font-size">Tamanho da fonte:</label>
-                <select id="font-size">
-                    <option value="12px">12px</option>
-                    <option value="14px">14px</option>
-                    <option value="16px">16px</option>
-                    <option value="18px">18px</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="tab-size">Tamanho da tabulação:</label>
-                <select id="tab-size">
-                    <option value="2">2 espaços</option>
-                    <option value="4">4 espaços</option>
-                    <option value="8">8 espaços</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
+            
+            <div class="settings-group">
+                <h3>Editor</h3>
+                <div class="settings-row">
+                    <div class="settings-label">Tamanho da fonte</div>
+                    <select id="font-size">
+                        <option value="12px">12px</option>
+                        <option value="14px" selected>14px</option>
+                        <option value="16px">16px</option>
+                        <option value="18px">18px</option>
+                        <option value="20px">20px</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Largura da indentação</div>
+                    <select id="tab-size">
+                        <option value="2">2 espaços</option>
+                        <option value="4" selected>4 espaços</option>
+                        <option value="8">8 espaços</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Usar tabs em vez de espaços</div>
                     <input type="checkbox" id="use-tabs">
-                    <label for="use-tabs">Usar tabs em vez de espaços</label>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Auto-completar parênteses</div>
+                    <input type="checkbox" id="auto-close-brackets" checked>
+                </div>
+                <div class="settings-row">
+    <div class="settings-label">Quebra de linha automática</div>
+    <input type="checkbox" id="line-wrapping" checked>
+</div>
+                <div class="settings-row">
+                    <div class="settings-label">Numerar linhas</div>
+                    <input type="checkbox" id="line-numbers" checked>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Destacar linha atual</div>
+                    <input type="checkbox" id="highlight-active-line" checked>
                 </div>
             </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="auto-close-brackets">
-                    <label for="auto-close-brackets">Auto-fechar parênteses e colchetes</label>
+            
+            <div class="settings-group">
+                <h3>Auto-salvar</h3>
+                <div class="settings-row">
+                    <div class="settings-label">Ativar auto-salvar</div>
+                    <input type="checkbox" id="auto-save" checked>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Intervalo (segundos)</div>
+                    <input type="number" id="auto-save-interval" min="5" max="300" value="30">
                 </div>
             </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="line-wrapping">
-                    <label for="line-wrapping">Quebra de linha automática</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="line-numbers">
-                    <label for="line-numbers">Números de linha</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="highlight-active-line">
-                    <label for="highlight-active-line">Destacar linha ativa</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="auto-save">
-                    <label for="auto-save">Salvamento automático</label>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="auto-save-interval">Intervalo de salvamento (segundos):</label>
-                <input type="number" id="auto-save-interval" min="10" max="300" value="30">
-            </div>
-
-            <div class="modal-buttons">
-                <button id="reset-settings" class="btn-secondary">Resetar</button>
-                <button id="save-settings" class="btn-primary">Salvar</button>
+            
+            <div style="text-align: right; margin-top: 20px;">
+                <button id="reset-settings">Restaurar padrões</button>
+                <button id="save-settings">Salvar configurações</button>
             </div>
         </div>
     </div>
 
-    <!-- Add Snippet Modal -->
-    <div id="add-snippet-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Adicionar Snippet</h3>
-                <button id="close-add-snippet" class="close-btn">&times;</button>
-            </div>
-
-            <div class="form-group">
-                <label for="snippet-name">Nome do snippet:</label>
-                <input type="text" id="snippet-name" placeholder="Ex: Loop For">
-            </div>
-
-            <div class="form-group">
-                <label for="snippet-language">Linguagem:</label>
-                <select id="snippet-language">
-                    <option value="javascript">JavaScript</option>
-                    <option value="htmlmixed">HTML</option>
-                    <option value="css">CSS</option>
-                    <option value="php">PHP</option>
-                    <option value="python">Python</option>
-                    <option value="xml">XML</option>
-                    <option value="sql">SQL</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="snippet-code">Código:</label>
-                <textarea id="snippet-code" placeholder="Digite o código do snippet aqui..."></textarea>
-            </div>
-
-            <div class="modal-buttons">
-                <button id="cancel-snippet" class="btn-secondary">Cancelar</button>
-                <button id="save-snippet" class="btn-primary">Salvar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- CodeMirror Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/comment/comment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
-
-    <!-- Beautify Scripts -->
+    <!-- CodeMirror e addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    
+    <!-- Modos de linguagem -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/php/php.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+    
+    <!-- Temas adicionais -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/nord.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/solarized.min.js"></script>
+    
+    <!-- Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/search/matchesonscrollbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/scroll/annotatescrollbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/comment/comment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/xml-hint.min.js"></script>
+    
+    <!-- Beautify para formatação de código -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
 
-    <!-- Your JavaScript file -->
-    <!-- <script src="paste.js"></script> -->
     <script>
+        
         class EnhancedCodeEditor {
-            // Função para copiar todo o código
-            copyAllCode() {
-                const code = this.editor.getValue();
-
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(code).then(() => {
-                        this.showCopyFeedback();
-                    }).catch(() => {
-                        this.fallbackCopyText(code);
-                    });
-                } else {
-                    this.fallbackCopyText(code);
-                }
-            }
-
-            // Feedback visual para cópia
-            showCopyFeedback() {
-                const copyBtn = document.getElementById('copy-btn');
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✓';
-                copyBtn.classList.add('copied');
-
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.classList.remove('copied');
-                }, 1500);
-            }
-
-            // Fallback para navegadores sem suporte a clipboard API
-            fallbackCopyText(text) {
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                textArea.style.position = 'fixed';
-                textArea.style.left = '-999999px';
-                textArea.style.top = '-999999px';
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-
-                try {
-                    document.execCommand('copy');
-                    this.showCopyFeedback();
-                } catch (err) {
-                    console.error('Erro ao copiar:', err);
-                    alert('Erro ao copiar o código. Tente selecionar manualmente.');
-                }
-
-                document.body.removeChild(textArea);
-            }
-
-            // Abrir modal de adicionar snippet
-            openAddSnippetModal() {
-                // Limpar campos
-                document.getElementById('snippet-name').value = '';
-                document.getElementById('snippet-code').value = '';
-                document.getElementById('snippet-language').value = this.editor.getOption('mode');
-
-                document.getElementById('add-snippet-modal').style.display = 'flex';
-            }
-
-            // Fechar modal de adicionar snippet
-            closeAddSnippetModal() {
-                document.getElementById('add-snippet-modal').style.display = 'none';
-            }
-
-            // Salvar novo snippet
-            saveNewSnippet() {
-                const name = document.getElementById('snippet-name').value.trim();
-                const code = document.getElementById('snippet-code').value.trim();
-                const language = document.getElementById('snippet-language').value;
-
-                if (!name || !code) {
-                    alert('Por favor, preencha o nome e o código do snippet.');
-                    return;
-                }
-
-                // Verificar se já existe um snippet com o mesmo nome
-                const existingSnippet = this.snippets.find(s => s.name.toLowerCase() === name.toLowerCase());
-                if (existingSnippet) {
-                    if (!confirm('Já existe um snippet com este nome. Deseja substituí-lo?')) {
-                        return;
-                    }
-                    // Remover o snippet existente
-                    this.snippets = this.snippets.filter(s => s.name.toLowerCase() !== name.toLowerCase());
-                }
-
-                // Adicionar novo snippet
-                const newSnippet = {
-                    name: name,
-                    language: language,
-                    code: code
-                };
-
-                this.snippets.push(newSnippet);
-                this.saveSnippets();
-
-                // Feedback
-                alert('Snippet salvo com sucesso!');
-                this.closeAddSnippetModal();
-            }
             constructor() {
                 this.editor = null;
                 this.settings = this.loadSettings();
@@ -755,17 +743,17 @@
                 this.currentSearchIndex = -1;
                 this.autoSaveTimer = null;
                 this.lastSavedContent = '';
-
+                
                 this.initEditor();
                 this.setupEventListeners();
                 this.loadEditorContent();
                 this.startAutoSave();
                 this.updateEditorStats();
             }
-
+            
             initEditor() {
                 const textarea = document.getElementById('code-editor');
-
+                
                 this.editor = CodeMirror.fromTextArea(textarea, {
                     mode: this.settings.language,
                     theme: this.settings.theme,
@@ -796,44 +784,34 @@
                         }
                     }
                 });
-
+                
                 // Aplicar configurações de estilo
                 this.updateEditorStyle();
-
+                
                 // Outros métodos init...
                 this.editor.on('change', () => {
                     this.updateEditorStats();
                 });
-
+                
                 this.editor.on('cursorActivity', () => {
                     this.updateCursorPosition();
                 });
             }
-
+            
             setupEventListeners() {
-                // Botão de copiar código
-                document.getElementById('copy-btn').addEventListener('click', () => this.copyAllCode());
-
-                // Botão de adicionar snippet
-                document.getElementById('add-snippet-btn').addEventListener('click', () => this.openAddSnippetModal());
-
-                // Modal de adicionar snippet
-                document.getElementById('close-add-snippet').addEventListener('click', () => this.closeAddSnippetModal());
-                document.getElementById('cancel-snippet').addEventListener('click', () => this.closeAddSnippetModal());
-                document.getElementById('save-snippet').addEventListener('click', () => this.saveNewSnippet());
                 // Botões da barra de ferramentas
                 document.getElementById('save-btn').addEventListener('click', () => this.saveContent());
                 document.getElementById('undo-btn').addEventListener('click', () => this.editor.undo());
                 document.getElementById('redo-btn').addEventListener('click', () => this.editor.redo());
                 document.getElementById('format-btn').addEventListener('click', () => this.formatCode());
-
+                
                 // Busca e substituição
                 document.getElementById('search-btn').addEventListener('click', () => this.search());
                 document.getElementById('prev-btn').addEventListener('click', () => this.navigateSearch(-1));
                 document.getElementById('next-btn').addEventListener('click', () => this.navigateSearch(1));
                 document.getElementById('replace-btn').addEventListener('click', () => this.replace());
                 document.getElementById('replace-all-btn').addEventListener('click', () => this.replaceAll());
-
+                
                 document.getElementById('search-input').addEventListener('input', () => this.search());
                 document.getElementById('search-input').addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
@@ -841,55 +819,29 @@
                         this.navigateSearch(1);
                     }
                 });
-
+                
                 // Seletores de linguagem e tema
                 document.getElementById('language-select').addEventListener('change', (e) => {
                     this.changeLanguage(e.target.value);
                 });
-
+                
                 document.getElementById('theme-select').addEventListener('change', (e) => {
                     this.changeTheme(e.target.value);
                 });
-
+                
                 // Snippets
                 document.getElementById('snippets-btn').addEventListener('click', () => this.toggleSnippetsPanel());
-
+                
                 // Configurações
                 document.getElementById('settings-btn').addEventListener('click', () => this.openSettings());
                 document.getElementById('close-settings').addEventListener('click', () => this.closeSettings());
                 document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
                 document.getElementById('reset-settings').addEventListener('click', () => this.resetSettings());
-
+                
                 // Inicializar valores dos selects
                 document.getElementById('language-select').value = this.settings.language;
                 document.getElementById('theme-select').value = this.settings.theme;
-                // ADICIONAR no método setupEventListeners():
-
-                // Suporte touch para mobile
-                if ('ontouchstart' in window) {
-                    // Permitir scroll horizontal no editor em mobile
-                    this.editor.on('touchstart', (cm, e) => {
-                        const touch = e.touches[0];
-                        cm.startTouch = {
-                            x: touch.clientX,
-                            y: touch.clientY,
-                            time: Date.now()
-                        };
-                    });
-
-                    this.editor.on('touchmove', (cm, e) => {
-                        if (cm.startTouch) {
-                            const touch = e.touches[0];
-                            const deltaX = Math.abs(touch.clientX - cm.startTouch.x);
-                            const deltaY = Math.abs(touch.clientY - cm.startTouch.y);
-
-                            // Se movimento horizontal for maior, permitir scroll horizontal
-                            if (deltaX > deltaY && deltaX > 10) {
-                                e.preventDefault();
-                            }
-                        }
-                    });
-                }
+                
                 // Atalhos de teclado
                 document.addEventListener('keydown', (e) => {
                     // Ctrl+F para busca
@@ -897,7 +849,7 @@
                         e.preventDefault();
                         document.getElementById('search-input').focus();
                     }
-
+                    
                     // F3 para próxima ocorrência
                     if (e.key === 'F3') {
                         e.preventDefault();
@@ -905,7 +857,7 @@
                     }
                 });
             }
-
+            
             // Métodos de busca
             search() {
                 const query = document.getElementById('search-input').value;
@@ -915,11 +867,11 @@
                     this.updateSearchCount();
                     return;
                 }
-
+                
                 // Usar o cursor de busca do CodeMirror
                 this.searchResults = [];
                 this.currentSearchIndex = -1;
-
+                
                 const cursor = this.editor.getSearchCursor(query, null, { caseFold: true });
                 while (cursor.findNext()) {
                     this.searchResults.push({
@@ -927,34 +879,34 @@
                         to: cursor.to()
                     });
                 }
-
+                
                 if (this.searchResults.length > 0) {
                     this.currentSearchIndex = 0;
                     this.highlightCurrentMatch();
                 }
-
+                
                 this.updateSearchCount();
             }
-
+            
             navigateSearch(direction) {
                 if (this.searchResults.length === 0) return;
-
+                
                 this.currentSearchIndex += direction;
-
+                
                 // Navegação circular
                 if (this.currentSearchIndex < 0) {
                     this.currentSearchIndex = this.searchResults.length - 1;
                 } else if (this.currentSearchIndex >= this.searchResults.length) {
                     this.currentSearchIndex = 0;
                 }
-
+                
                 this.highlightCurrentMatch();
                 this.updateSearchCount();
             }
-
+            
             highlightCurrentMatch() {
                 if (this.currentSearchIndex === -1 || !this.searchResults.length) return;
-
+                
                 const match = this.searchResults[this.currentSearchIndex];
                 this.editor.setSelection(match.from, match.to);
                 this.editor.scrollIntoView({
@@ -962,7 +914,7 @@
                     to: match.to
                 }, 50);
             }
-
+            
             updateSearchCount() {
                 const countElement = document.getElementById('search-count');
                 if (this.searchResults.length === 0) {
@@ -971,48 +923,48 @@
                     countElement.textContent = `${this.currentSearchIndex + 1}/${this.searchResults.length}`;
                 }
             }
-
+            
             replace() {
                 if (this.currentSearchIndex === -1 || !this.searchResults.length) return;
-
+                
                 const replaceValue = document.getElementById('replace-input').value;
                 const match = this.searchResults[this.currentSearchIndex];
-
+                
                 // Faz a substituição
                 this.editor.replaceRange(replaceValue, match.from, match.to);
-
+                
                 // Atualiza os resultados de busca após a substituição
                 this.search();
             }
-
+            
             replaceAll() {
                 const searchValue = document.getElementById('search-input').value;
                 const replaceValue = document.getElementById('replace-input').value;
-
+                
                 if (!searchValue) return;
-
+                
                 // Substituir todas as ocorrências
                 const text = this.editor.getValue();
                 const newText = text.replaceAll(new RegExp(this.escapeRegExp(searchValue), 'gi'), replaceValue);
                 this.editor.setValue(newText);
-
+                
                 // Atualiza a busca
                 this.search();
-
+                
                 // Mostra feedback
                 alert(`Todas as ocorrências foram substituídas.`);
             }
-
+            
             escapeRegExp(string) {
                 return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             }
-
+            
             // Outras funções
             formatCode() {
                 const code = this.editor.getValue();
                 const mode = this.editor.getOption('mode');
                 let formattedCode = code;
-
+                
                 const options = {
                     indent_size: parseInt(this.settings.tabSize),
                     indent_char: this.settings.useTabs ? '\t' : ' ',
@@ -1021,7 +973,7 @@
                     max_preserve_newlines: 2,
                     end_with_newline: true
                 };
-
+                
                 if (mode === 'javascript' || mode === 'application/json') {
                     formattedCode = js_beautify(code, options);
                 } else if (mode === 'htmlmixed' || mode === 'xml') {
@@ -1029,51 +981,51 @@
                 } else if (mode === 'css') {
                     formattedCode = css_beautify(code, options);
                 }
-
+                
                 this.editor.setValue(formattedCode);
                 this.editor.setCursor(0, 0);
             }
-
+            
             changeLanguage(language) {
                 this.editor.setOption('mode', language);
                 this.settings.language = language;
                 this.saveSettings();
             }
-
+            
             changeTheme(theme) {
                 this.editor.setOption('theme', theme);
                 this.settings.theme = theme;
                 this.saveSettings();
             }
-
+            
             // Atualização da interface
             updateEditorStats() {
                 const content = this.editor.getValue();
                 const charCount = content.length;
                 const lineCount = this.editor.lineCount();
-
+                
                 document.getElementById('char-count').textContent = `${charCount} caracteres`;
                 document.getElementById('line-count').textContent = `${lineCount} linhas`;
             }
-
+            
             updateCursorPosition() {
                 const cursor = this.editor.getCursor();
                 const selection = this.editor.getSelection();
-
+                
                 document.getElementById('cursor-position').textContent = `Ln: ${cursor.line + 1}, Col: ${cursor.ch + 1}`;
-
+                
                 if (selection && selection.length > 0) {
                     document.getElementById('selection-info').textContent = `Seleção: ${selection.length} caracteres`;
                 } else {
                     document.getElementById('selection-info').textContent = '';
                 }
             }
-
+            
             updateEditorStyle() {
                 const cmElement = this.editor.getWrapperElement();
                 cmElement.style.fontSize = this.settings.fontSize;
             }
-
+            
             // Gerenciamento de configurações
             loadSettings() {
                 const defaultSettings = {
@@ -1089,7 +1041,7 @@
                     autoSave: true,
                     autoSaveInterval: 30
                 };
-
+                
                 try {
                     const saved = localStorage.getItem('codeEditorSettings');
                     return saved ? JSON.parse(saved) : defaultSettings;
@@ -1098,7 +1050,7 @@
                     return defaultSettings;
                 }
             }
-
+            
             saveSettings() {
                 // Coletar configurações do modal
                 this.settings.fontSize = document.getElementById('font-size').value;
@@ -1110,7 +1062,7 @@
                 this.settings.highlightActiveLine = document.getElementById('highlight-active-line').checked;
                 this.settings.autoSave = document.getElementById('auto-save').checked;
                 this.settings.autoSaveInterval = document.getElementById('auto-save-interval').value;
-
+                
                 // Aplicar configurações ao editor
                 this.editor.setOption('indentUnit', parseInt(this.settings.tabSize));
                 this.editor.setOption('tabSize', parseInt(this.settings.tabSize));
@@ -1119,30 +1071,30 @@
                 this.editor.setOption('lineWrapping', this.settings.lineWrapping);
                 this.editor.setOption('lineNumbers', this.settings.lineNumbers);
                 this.editor.setOption('styleActiveLine', this.settings.highlightActiveLine);
-
+                
                 // Atualizar status bar
-                document.getElementById('indentation').textContent = this.settings.useTabs ?
+                document.getElementById('indentation').textContent = this.settings.useTabs ? 
                     'Indentação: Tabs' : `Espaços: ${this.settings.tabSize}`;
-
+                
                 // Atualizar estilo
                 this.updateEditorStyle();
-
+                
                 // Salvar no localStorage
                 try {
                     localStorage.setItem('codeEditorSettings', JSON.stringify(this.settings));
                 } catch (e) {
                     console.error('Erro ao salvar configurações:', e);
                 }
-
+                
                 // Reiniciar autosave se necessário
                 this.stopAutoSave();
                 if (this.settings.autoSave) {
                     this.startAutoSave();
                 }
-
+                
                 this.closeSettings();
             }
-
+            
             resetSettings() {
                 if (confirm('Deseja restaurar todas as configurações para os valores padrão?')) {
                     localStorage.removeItem('codeEditorSettings');
@@ -1151,16 +1103,16 @@
                     this.saveSettings();
                 }
             }
-
+            
             openSettings() {
                 this.populateSettingsModal();
                 document.getElementById('settings-modal').style.display = 'flex';
             }
-
+            
             closeSettings() {
                 document.getElementById('settings-modal').style.display = 'none';
             }
-
+            
             populateSettingsModal() {
                 document.getElementById('font-size').value = this.settings.fontSize;
                 document.getElementById('tab-size').value = this.settings.tabSize;
@@ -1172,7 +1124,7 @@
                 document.getElementById('auto-save').checked = this.settings.autoSave;
                 document.getElementById('auto-save-interval').value = this.settings.autoSaveInterval;
             }
-
+            
             // Gerenciamento de snippets
             loadSnippets() {
                 const defaultSnippets = [
@@ -1207,7 +1159,7 @@
                         code: 'def ${1:nome_funcao}(${2:parametros}):\n\t"""${3:Docstring}"""\n\t${4:pass}'
                     }
                 ];
-
+                
                 try {
                     const saved = localStorage.getItem('codeEditorSnippets');
                     return saved ? JSON.parse(saved) : defaultSnippets;
@@ -1216,7 +1168,7 @@
                     return defaultSnippets;
                 }
             }
-
+            
             saveSnippets() {
                 try {
                     localStorage.setItem('codeEditorSnippets', JSON.stringify(this.snippets));
@@ -1224,119 +1176,75 @@
                     console.error('Erro ao salvar snippets:', e);
                 }
             }
-
-            // MODIFICAR a função toggleSnippetsPanel() existente:
-
+            
             toggleSnippetsPanel() {
                 const panel = document.getElementById('snippet-container');
-
+                
                 if (panel.style.display === 'block') {
                     panel.style.display = 'none';
                 } else {
-                    // Posicionamento responsivo
+                    // Posicionar o painel
                     const button = document.getElementById('snippets-btn');
                     const rect = button.getBoundingClientRect();
-                    const isMobile = window.innerWidth <= 768;
-
-                    if (isMobile) {
-                        // Em mobile, posicionar mais centralizado
-                        panel.style.top = `${rect.bottom + 5}px`;
-                        panel.style.left = '10px';
-                        panel.style.right = '10px';
-                        panel.style.width = 'auto';
-                    } else {
-                        // Desktop - posicionamento normal
-                        panel.style.top = `${rect.bottom + 5}px`;
-                        panel.style.left = `${rect.left}px`;
-                        panel.style.width = '300px';
-                        panel.style.right = 'auto';
-                    }
-
+                    panel.style.top = `${rect.bottom + 5}px`;
+                    panel.style.left = `${rect.left}px`;
+                    
                     // Mostrar snippets relevantes para a linguagem atual
                     this.showRelevantSnippets();
                     panel.style.display = 'block';
                 }
             }
-
-
+            
             showRelevantSnippets() {
                 const currentMode = this.editor.getOption('mode');
                 const container = document.getElementById('snippet-container');
                 container.innerHTML = '';
-
+                
                 // Filtrar snippets pela linguagem atual ou mostrar todos
-                const snippetsToShow = this.snippets.filter(snippet =>
+                const snippetsToShow = this.snippets.filter(snippet => 
                     snippet.language === currentMode || currentMode === 'all'
                 );
-
+                
                 if (snippetsToShow.length === 0) {
                     container.innerHTML = '<div class="snippet-item">Nenhum snippet disponível para esta linguagem</div>';
                     return;
                 }
-
+                
                 snippetsToShow.forEach((snippet, index) => {
                     const snippetElement = document.createElement('div');
                     snippetElement.className = 'snippet-item';
                     snippetElement.innerHTML = `
-            <div class="snippet-name">${snippet.name}</div>
-            <div class="snippet-preview">${this.snippetPreview(snippet.code)}</div>
-            <div class="snippet-actions">
-                <button onclick="codeEditor.insertSnippet('${this.escapeHtml(snippet.code)}')">Inserir</button>
-                <button onclick="codeEditor.deleteSnippet(${index})">Excluir</button>
-            </div>
-        `;
-
+                        <div class="snippet-name">${snippet.name}</div>
+                        <div class="snippet-preview">${this.snippetPreview(snippet.code)}</div>
+                    `;
+                    snippetElement.addEventListener('click', () => {
+                        this.insertSnippet(snippet.code);
+                        this.toggleSnippetsPanel();
+                    });
+                    
                     container.appendChild(snippetElement);
                 });
             }
-            //função helper:
-            escapeHtml(text) {
-                return text.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-            }
-            // ADICIONAR função para deletar snippet:
-            deleteSnippet(index) {
-                const currentMode = this.editor.getOption('mode');
-                const snippetsToShow = this.snippets.filter(snippet =>
-                    snippet.language === currentMode || currentMode === 'all'
-                );
-
-                const snippetToDelete = snippetsToShow[index];
-
-                if (confirm(`Deseja realmente excluir o snippet "${snippetToDelete.name}"?`)) {
-                    // Encontrar o índice real no array original
-                    const realIndex = this.snippets.findIndex(s =>
-                        s.name === snippetToDelete.name &&
-                        s.language === snippetToDelete.language &&
-                        s.code === snippetToDelete.code
-                    );
-
-                    if (realIndex !== -1) {
-                        this.snippets.splice(realIndex, 1);
-                        this.saveSnippets();
-                        this.showRelevantSnippets(); // Atualizar a lista
-                    }
-                }
-            }
-
+            
             snippetPreview(code) {
                 // Limitar previews longos
                 return code.length > 100 ? code.substring(0, 100) + '...' : code;
             }
-
+            
             insertSnippet(code) {
                 // Implementação básica (sem placeholders de momento)
                 const cursor = this.editor.getCursor();
                 this.editor.replaceRange(code, cursor);
             }
-
+            
             // Gerenciamento de salvamento
             saveContent() {
                 const content = this.editor.getValue();
-
+                
                 try {
                     localStorage.setItem('codeEditorContent', content);
                     this.lastSavedContent = content;
-
+                    
                     // Feedback visual
                     const saveBtn = document.getElementById('save-btn');
                     const originalText = saveBtn.textContent;
@@ -1349,7 +1257,7 @@
                     alert('Erro ao salvar o conteúdo. O armazenamento local pode estar cheio.');
                 }
             }
-
+            
             loadEditorContent() {
                 try {
                     const content = localStorage.getItem('codeEditorContent') || '';
@@ -1359,10 +1267,10 @@
                     console.error('Erro ao carregar conteúdo:', e);
                 }
             }
-
+            
             startAutoSave() {
                 if (!this.settings.autoSave) return;
-
+                
                 this.autoSaveTimer = setInterval(() => {
                     const content = this.editor.getValue();
                     if (content !== this.lastSavedContent) {
@@ -1370,7 +1278,7 @@
                     }
                 }, this.settings.autoSaveInterval * 1000);
             }
-
+            
             stopAutoSave() {
                 if (this.autoSaveTimer) {
                     clearInterval(this.autoSaveTimer);
@@ -1381,50 +1289,18 @@
 
         // Inicializar o editor quando o documento estiver pronto
         document.addEventListener('DOMContentLoaded', () => {
-            window.codeEditor = new EnhancedCodeEditor(); // Tornar global para acesso aos snippets
-
+            const codeEditor = new EnhancedCodeEditor();
+            
             // Adicionar evento de beforeunload para alertar sobre alterações não salvas
             window.addEventListener('beforeunload', (e) => {
-                const content = window.codeEditor.editor.getValue();
-                if (content !== window.codeEditor.lastSavedContent) {
+                const content = codeEditor.editor.getValue();
+                if (content !== codeEditor.lastSavedContent) {
                     const message = 'Você tem alterações não salvas. Deseja realmente sair?';
                     e.returnValue = message;
                     return message;
                 }
             });
-
-            // Fechar painéis ao clicar fora
-            document.addEventListener('click', (e) => {
-                const snippetContainer = document.getElementById('snippet-container');
-                const snippetBtn = document.getElementById('snippets-btn');
-
-                if (!snippetContainer.contains(e.target) && e.target !== snippetBtn) {
-                    snippetContainer.style.display = 'none';
-                }
-            });
-
-            // Melhorar responsividade da busca em mobile
-            const searchInput = document.getElementById('search-input');
-            const replaceInput = document.getElementById('replace-input');
-            const replaceBtn = document.getElementById('replace-btn');
-            const replaceAllBtn = document.getElementById('replace-all-btn');
-
-            // Toggle replace mode
-            document.getElementById('search-btn').addEventListener('click', () => {
-                const isReplaceVisible = replaceInput.style.display !== 'none';
-
-                if (isReplaceVisible) {
-                    replaceInput.style.display = 'none';
-                    replaceBtn.style.display = 'none';
-                    replaceAllBtn.style.display = 'none';
-                } else {
-                    replaceInput.style.display = 'inline-block';
-                    replaceBtn.style.display = 'inline-block';
-                    replaceAllBtn.style.display = 'inline-block';
-                }
-            });
         });
     </script>
 </body>
-
 </html>
